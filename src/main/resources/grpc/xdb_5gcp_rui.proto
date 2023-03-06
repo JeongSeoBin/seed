@@ -1,0 +1,250 @@
+// file    : xdb_5gcp_rui.proto
+// author  : S Jung
+// date    : 2021.10.20
+// Copyright (c) 2021 Innowireless Corporation. All rights reserved.
+// purpose : Declaration of a service and message types for XDB. 
+// comments: 
+// history :
+//  Oct 20, 2021 (S Jung)
+//    Initial update for XDB-5GCP project
+//  Nov 02, 2021 (S Jung)
+//    Add SqlType to GenerateResult message
+//  Nov 05, 2021 (S Jung)
+//    Change ExecutionQueryKey RPC to support stream response
+//    Add result_row_count to ExecutionResult message
+//  Nov 11, 2021 (S Jung)
+//    Add DatePartitionInfo to TableInfo
+//  Nov 12, 2021 (S Jung)
+//    Delete DatePartitionInfo
+//    Add java namespace / class info
+//  Nov 16, 2021 (S Jung)
+//    Add SqlType to ExecutionResult
+//  Nod 17, 2021 (S Jung)
+//    Add ExecutionErrorCode to ExecutionResult message
+//
+//
+
+syntax = "proto3";
+option optimize_for = SPEED;
+
+option java_package = "com.innowireless.xdb5gcp.rui";
+option java_outer_classname = "RuiProto";
+option java_multiple_files = true;
+
+package xdb_5gcp.rui;
+
+service XdbService {
+  // generate a new query key using sql string
+  rpc GenerateQueryKey(QueryRequest) returns (GenerateResult);
+
+  // execute a generated query(key)
+  // return the stream of execution status when the status of a query finished
+  // the maximum number of finished queries (== STATUS_DONE || == STATUS_ERROR) that can be stored is 1000
+  // if it exceeds, the oldest finished query will be removed first 
+  //
+  // **the result of SELECT statement (memory table) != query key object
+  // **memory table has same name as query key
+  rpc ExecuteQueryKey(Key) returns (stream ExecutionResult);
+
+  // get the current execution status of a target query
+  rpc GetExecutionInfo(Key) returns (ExecutionResult);
+
+  // remove query key manually
+  // **memory table can't be deleted by this RPC
+  rpc RemoveQueryKey(Key) returns (BaseResult);
+
+  rpc RemoveQueryKeyAll(Empty) returns (BaseResult);
+
+  // get records using table name (USER_TABLE and MEMORY_TABLE)
+  rpc GetDataset(DatasetRequest) returns (stream Dataset);
+
+  // get table info list with regex
+  rpc GetTableInfoList(TableInfoListRequest) returns (TableInfoListResult);
+
+  // get detailed table info with table name
+  rpc GetTableSchema(TableName) returns (TableSchemaResult);
+
+  // remove table by using datetime (U)SER_TABLE and MEMORY_TABLE)
+  rpc RemoveTimePartition(RemoveTimePartitionRequest) returns (BaseResult);
+}
+
+// every gRPC response messages (except stream) contain BaseResult to return general error
+// before using a response message, user has to check if ResultCode is valid (RESULT_OK)
+message BaseResult {
+  enum ResultCode {
+    RESULT_OK = 0;
+    RESULT_ERROR = 1;
+    RESULT_KEY_NOT_FOUND = 2;
+    RESULT_INPUT_SYNTAX_ERROR = 3;
+  }
+  ResultCode result_code = 1;
+
+  string error_message = 2;
+
+  // when result code is RESULT_INPUT_SYNTAX_ERROR and error_pos_exist is true,
+  // valid position data will be in SyntaxErrorPos message
+  message SyntaxErrorPos {
+    bool error_pos_exist = 1;
+    int32 start_line = 2;
+    int32 end_line = 3;
+    int32 start_pos = 4;
+    int32 end_pos = 5;
+  }
+  SyntaxErrorPos syntax_error_pos = 3;
+}
+
+message Key {
+  string key_string = 1;
+}
+
+message QueryRequest {
+  string user_identity = 1;
+
+  string sql_string = 2;
+
+  int64 start_timestamp = 3; // start timestamp for ISA_HUB table
+
+  int64 end_timestamp = 4; // end timestamp for ISA_HUB table
+}
+
+enum SqlType {
+  SELECT_STMT = 0;
+  CREATE_STMT = 1;
+  DROP_STMT = 2;
+  INSERT_STMT = 3;
+  IMPORT_STMT = 4;
+  EXPORT_STMT = 5;
+}
+
+message GenerateResult {
+  BaseResult base_result = 1;
+
+  Key key = 2;
+
+  SqlType sql_type = 3;
+}
+
+message ExecutionResult {
+  BaseResult base_result = 1;
+
+  SqlType sql_type = 2;
+
+  enum ExecutionStatus {
+    STATUS_UNKNOWN = 0;
+    STATUS_READY = 1;
+    STATUS_RUNNING = 2;
+    STATUS_DONE = 3;
+    STATUS_ERROR = 4;
+  }
+  ExecutionStatus execution_status = 3;
+
+  enum ExecutionErrorCode {
+    NOT_ERROR = 0;
+    UNKNOWN_ERROR = 1;
+  }
+  ExecutionErrorCode execution_error_code = 4;
+
+  string execution_message = 5;
+
+  int64 execution_time = 6; // milliseconds
+
+  int64 result_row_count = 7;
+}
+
+message Empty {
+
+}
+
+message DatasetRequest {
+  string table_name = 1;
+
+  int64 record_offset = 2;
+
+  int64 record_count = 3;
+}
+
+message Dataset {
+  repeated string record = 1;
+}
+
+message TableInfoListRequest {
+  enum RequestTableType {
+    ALL_TABLE = 0;
+    ISA_HUB_TABLE = 1;
+    USER_TABLE = 2;
+    MEMORY_TABLE = 3;
+  }
+  RequestTableType table_type = 1;
+
+  // if regex string is empty, xdb will return all existing tables  
+  string table_name_regex = 2;
+}
+
+message TableInfo {
+  enum TableType {
+    UNKNOWN = 0;
+    ISA_HUB_TABLE = 1;
+    USER_TABLE = 2;
+    MEMORY_TABLE = 3;
+  }
+  TableType table_type = 1;
+
+  string table_name = 2;
+
+  string user_identity = 3; // for USER_TABLE and MEMORY_TABLE
+
+  int64 total_row_count = 4; // for USER_TABLE and MEMORY_TABLE
+}
+
+message TableInfoListResult {
+  BaseResult base_result = 1;
+
+  repeated TableInfo table_info_list = 2;
+}
+
+message TableName {
+  string table_name = 1;
+}
+
+message TableSchemaResult {
+  BaseResult base_result = 1;
+
+  TableInfo table_info = 2;
+
+  message ColumnInfo {
+    string column_name = 1;
+
+    enum DataType {
+      TYPE_NULL = 0;
+      TYPE_INT32 = 1;
+      TYPE_INT64 = 2;
+      TYPE_DOUBLE = 3;
+      TYPE_STRING = 4;
+      TYPE_TIMESTAMP = 5;
+    }
+    DataType column_type = 2;
+  
+    int32 column_length = 3; // -1, infinite length
+  
+    bool nullable = 4; // true only
+  }
+  repeated ColumnInfo column_info_list = 3;
+
+  message TimePartition {
+    string partition_datetime = 1; // local datetime format (YYYY-MM-DD)
+
+    int64 row_count = 2;
+  }
+  repeated TimePartition time_partition_list = 4;
+}
+
+message RemoveTimePartitionRequest {
+  string table_name = 1;
+
+  // start date <= target file <= end date
+  // currently, only date unit will be used
+  // 2021-04-04T20:11:11 -> 2021-04-04
+  string start_datetime = 2; // local datetime format (YYYY-MM-DD)
+
+  string end_datetime = 3; // local datetime format (YYYY-MM-DD)
+}

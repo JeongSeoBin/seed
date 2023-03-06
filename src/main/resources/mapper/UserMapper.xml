@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.innowireless.atas.was.mybatis.mappers.UserMapper">
+
+    <select id='getUserPage' resultType="CaseInsensitiveMap">
+        select
+            u.user_id,
+            u.user_name,
+            ur.role_id,
+            r.role_name,
+            u.email,
+            u.team_name,
+            u.user_state,
+            u.phone,
+            u.purpose,
+            u.allowed_ip,
+            u.allowed_id,
+            u.mac_1,
+            u.mac_2,
+            u.lock_account,
+            u.expire_date,
+            u.pw_update_date,
+            u.request_date
+        from
+            tm_user u
+            left join tm_user_role ur
+                on u.user_id = ur.user_id
+            left join tm_role r
+                on r.role_id = ur.role_id
+        <where>
+            <if test="isRegistered != null">
+                and u.is_registered = #{isRegistered}
+            </if>
+            <if test="userId != null">
+                and u.user_id like '%'||#{userId}||'%'
+            </if>
+            <if test="userNm != null">
+                and u.user_name like '%'||#{userNm}||'%'
+            </if>
+            <if test="roleId != null">
+                and ur.role_id = #{roleId}
+            </if>
+        </where>
+    </select>
+
+    <select id='getUserPhoneRestrict' resultType="CaseInsensitiveMap">
+        select
+            u.user_id,
+            u.user_name,
+            u.phone,
+            u.team_name,
+            u.is_restrict_checked
+        from
+            tm_user u
+    </select>
+
+    <update id="updateRestrictChecked">
+        update
+            tm_user
+        set
+            is_restrict_checked = #{isRestrictChecked}
+        where
+            user_id = #{userId}
+    </update>
+
+    <select id="getUsersInfoByReg" resultType="CaseInsensitiveMap">
+        select
+            u.user_id,
+            u.user_name,
+            u.phone,
+            u.team_name,
+            u.email,
+            r.role_name,
+            u.purpose,
+            u.allowed_ip,
+            u.allowed_id,
+            u.mac_1,
+            u.mac_2,
+            u.lock_account,
+            u.is_registered,
+            u.request_date,
+            u.expire_date,
+            ur.role_id
+        from
+            tm_user u
+            left join tm_user_role ur
+                on u.user_id = ur.user_id
+            left join tm_role r
+                on r.role_id = ur.role_id
+        <where>
+            <if test="isRegistered != null">
+                and
+                u.is_registered = #{isRegistered}
+            </if>
+            <if test="userId != null">
+                and u.user_id like '%'||#{userId}||'%'
+            </if>
+            <if test="userNm != null">
+                and u.user_name like '%'||#{userNm}||'%'
+            </if>
+            <if test="roleId != null">
+                and ur.role_id = #{roleId}
+            </if>
+        </where>
+        order by
+            user_id asc
+    </select>
+    
+    <select id="getAllUserRoles" resultType="CaseInsensitiveMap">
+        select
+            role_id,
+            role_name,
+            description
+        from
+            tm_role
+    </select>
+
+    <select id='getAllUserId' resultType="CaseInsensitiveMap">
+        select
+            user_id
+        from
+            tm_user
+    </select>
+
+    <select id='getUserForAuthentication' resultType="CaseInsensitiveMap">
+        select
+            user_id,
+            password,
+            user_name,
+            expire_date
+        from
+            tm_user
+        where
+            user_id = #{userId}
+            and user_state = 'A'
+    </select>
+
+    <select id="getUserState" resultType="java.util.HashMap">
+        select user_state from tm_user where user_id = #{userId}
+    </select>
+
+    <select id="getUserRoles" resultType="CaseInsensitiveMap">
+        select
+            role_id
+        from
+            tm_user_role
+        where
+            user_id = #{userId}
+    </select>
+
+    <select id="getUserPrivileges" resultType="CaseInsensitiveMap">
+        select
+            rp.privilege_id
+        from
+            tm_user_role ur
+            inner join tm_role_privilege rp
+                on ur.role_id = rp.role_id
+        where
+            ur.user_id = #{userId}
+    </select>
+
+    <select id='getUserInfo' resultType="CaseInsensitiveMap">
+        select
+            user_id,
+            user_name,
+            email,
+            team_name,
+            user_state,
+            expire_date,
+            phone,
+            purpose,
+            mac_1,
+            mac_2,
+            pw_update_id
+        from
+            tm_user
+        where
+            user_id = #{userId}
+    </select>
+
+    <insert id="addUser">
+        insert into tm_user (
+            user_id,
+            user_name,
+            password,
+            phone,
+            email,
+            purpose,
+            allowed_ip,
+            allowed_id,
+            team_name,
+            mac_1,
+            mac_2,
+            user_state,
+            is_registered,
+            expire_date,
+            pw_update_date
+        )
+        values (
+            #{userId},
+            #{userName},
+            #{password},
+            #{phone},
+            #{email},
+            #{purpose},
+            #{allowedIp},
+            #{allowedId},
+            #{dept},
+            #{mac1},
+            #{mac2},
+            'A',
+            'T',
+            #{expireDate},
+            #{pwUpdateDate}
+        )
+    </insert>
+
+    <!-- 관리자 역할 - 사용자 정보 수정 -->
+    <update id="updateUserInfo">
+        update tm_user
+        <set>
+            user_name = #{userName},
+            phone = #{phone},
+            email = #{email},
+            purpose = #{purpose},
+            allowed_ip = #{allowedIp},
+            team_name = #{dept},
+            mac_1 = #{mac1},
+            mac_2 = #{mac2}
+            <if test="expireDate != null">
+                , expire_date = #{expireDate}
+            </if>
+            <if test="isRegistered != null">
+                , is_registered = #{isRegistered}
+            </if>
+            <if test="allowedId != null">
+                , allowed_id = #{allowedId}
+            </if>
+            <if test="pwUpdateDate != null">
+                , pw_update_date = #{pwUpdateDate}
+            </if>
+            , update_date = current_timestamp at time zone 'utc'
+        </set>
+        where
+            user_id = #{userId}
+    </update>
+
+    <!-- 사용자 역할 - 사용자 정보 수정 -->
+    <update id="editUserInfo">
+        update tm_user
+        set
+            user_name = #{userName},
+            password = #{password},
+            phone = #{phone},
+            email = #{email},
+            purpose = #{purpose},
+            team_name = #{dept},
+            mac_1 = #{mac1},
+            mac_2 = #{mac2},
+            pw_update_date = #{pwUpdateDate},
+            pw_update_id = null,
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <update id="bulkUpdateUsersInfo">
+        update tm_user
+        <set>
+            <if test="dept != null">
+                team_name = #{dept},
+            </if>
+            <if test="isRegistered != null">
+                is_registered = #{isRegistered},
+            </if>
+            <if test="allowedId != null">
+                allowed_id = #{allowedId},
+            </if>
+            <if test="purpose != null">
+                purpose = #{purpose},
+            </if>
+            <if test="pwUpdateDate != null">
+                pw_update_date = #{pwUpdateDate},
+            </if>
+            <if test="expireDate != null">
+                expire_date = #{expireDate},
+            </if>
+            update_date = current_timestamp at time zone 'utc'
+        </set>
+        <where>
+            <foreach collection="userIds" item="id" open="(" close=")" separator="or">
+                user_id = #{id}
+            </foreach>
+        </where>
+    </update>
+
+    <select id="getUserPw" resultType="String">
+        select password from tm_user where user_id = #{userId}
+    </select>
+
+    <select id="getNewUserReqCnt" resultType="Integer">
+        select count (*) from tm_user where is_registered = 'F'
+    </select>
+
+    <select id="getRegUserCnt" resultType="Integer">
+        select count (*) from tm_user where is_registered = 'T'
+    </select>
+
+    <update id="changePw">
+        update tm_user
+        set
+            password = #{password},
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <update id="resetPw">
+        update
+            tm_user
+        set
+            password = #{password},
+            pw_update_date = #{pwUpdateDate},
+            pw_update_id = #{pwUpdateId},
+            expire_date = #{expireDate},
+            update_date = current_timestamp at time zone 'utc'
+        where
+            user_id = #{userId}
+    </update>
+
+    <update id="deleteCompleteUsers">
+        delete from tm_user where user_id = #{userId}
+    </update>
+
+    <insert id="insertUserToRole">
+        insert into tm_user_role (
+            user_id,
+            role_id
+        )
+        values (
+            #{userId},
+            #{roleId}
+        )
+    </insert>
+
+    <update id="updateIsoUserInfo">
+        update tm_user
+        set
+            user_name = #{userName},
+            team_name = #{teamName},
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <delete id="deleteUserFromRole">
+        delete from tm_user_role where user_id = #{userId}
+    </delete>
+
+    <select id="getPwUpdateDate" resultType="CaseInsensitiveMap">
+        select pw_update_date from tm_user where user_id = #{userId}
+    </select>
+
+    <select id="getExpireDate" resultType="CaseInsensitiveMap">
+        select expire_date from tm_user where user_id = #{userId}
+    </select>
+
+    <update id="unlockAccount">
+        update tm_user
+        set
+            login_fail_cnt = 0,
+            lock_account = 'F',
+            password = #{password},
+            pw_update_date = #{pwUpdateDate},
+            pw_update_id = #{pwUpdateId},
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <select id="getLoginFailCnt" resultType="int">
+        select login_fail_cnt from tm_user where user_id = #{userId}
+    </select>
+
+    <update id="increaseLoginFailCnt">
+        update tm_user
+        set
+            login_fail_cnt = #{cnt},
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <update id="setUserLock">
+        update tm_user
+        set
+            login_fail_cnt = #{cnt},
+            lock_account = 'T',
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <select id="isUserLock" resultType="int">
+        select count(user_id) from tm_user where user_id = #{userId} and lock_account = 'T'
+    </select>
+
+    <update id="initUserLoginFailCnt">
+        update tm_user
+        set
+            login_fail_cnt = 0,
+            lock_account = 'F',
+            login_ip = #{loginIp},
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <select id="getAllowedIp" resultType="String">
+        select allowed_ip from tm_user where user_id = #{userId}
+    </select>
+
+    <update id="setAllowedIp">
+        update tm_user
+        set
+            allowed_ip = #{allowedIp},
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <update id="extendExpireDate">
+        update tm_user
+        set
+            expire_date = #{expireDate},
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+
+    <select id="getExpiredOverUsers" resultType="java.util.Map">
+        select user_id
+        from tm_user
+        where expire_date <![CDATA[<=]]> current_timestamp at time zone 'utc'
+    </select>
+
+    <select id="getRegistered" resultType="String">
+        select is_registered
+        from tm_user
+        where user_id = #{userId}
+    </select>
+
+    <update id="setUserUpdateHistory">
+        update tm_user
+        set
+            update_date = current_timestamp at time zone 'utc'
+        where user_id = #{userId}
+    </update>
+</mapper>
