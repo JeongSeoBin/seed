@@ -1,5 +1,12 @@
 package com.innowireless.web.util;
 
+import lombok.experimental.UtilityClass;
+
+/**
+ * spring.security.custom 속성에 추가하여 사용하도록 한다.
+ */
+@Deprecated
+@UtilityClass
 public class PageUrls {
 
     // @formatter:off
@@ -14,8 +21,4 @@ public class PageUrls {
 
     public static final String LOGOUT_PROCESS_URL    = "/api/anon/logout";
     // @formatter:on
-
-    private PageUrls() {
-        throw new IllegalStateException("Utility class");
-    }
 }

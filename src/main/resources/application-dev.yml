@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:h2/schema.sql
+      data-locations: classpath:h2/data.sql
+  h2:
+    console:
+      enabled: true
+  security:
+    custom:
+      permit-all-urls: >
+        /,
+        /favicon.ico,
+        /icon.svg,
+        /login*.html,
+        /logo*.svg,
+        /css/**,
+        /favicon/**,
+        /js/**,
+        /img/**,
+        /fonts/**,
+        /lang/**,
+        /api/anon/**,
+        /packetViewer/version.html,
+        /packetViewer/packetviewer2.sfx.exe,
+        /packetViewer/iptable.txt,
+        /packetViewer/pcs2.ini,
+        /h2-console/**

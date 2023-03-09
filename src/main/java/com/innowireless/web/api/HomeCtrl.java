@@ -1,6 +1,7 @@
 package com.innowireless.web.api;
 
-import com.innowireless.web.util.PageUrls;
+import com.innowireless.web.security.SecurityCustomProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,7 +10,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @RestController
+@RequiredArgsConstructor
 public class HomeCtrl {
+
+    private final SecurityCustomProperties securityCustomProperties;
 
     /**
      * 로그인 된 상태에서 "/" 요청이 들어오면 "/index.htm"으로 redirect 시킨다.
@@ -20,6 +24,6 @@ public class HomeCtrl {
      */
     @RequestMapping(value = "/")
     public void home(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.sendRedirect(request.getContextPath() + PageUrls.INDEX_PAGE_URL);
+        response.sendRedirect(request.getContextPath() + securityCustomProperties.getIndexPageUrl());
     }
 }

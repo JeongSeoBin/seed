@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-//@Import(BeanValidatorPluginsConfiguration.class) => FIXME: VO 내에 설정되있는 @NotNull, @NotEmpty 등을 표시해주는 역할 [확인 필요]
 public class SwaggerConfig {
 
     @Value("${spring.application.name}")

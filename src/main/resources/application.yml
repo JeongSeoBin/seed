@@ -5,22 +5,21 @@ spring:
   application:
     name: Seed
   profiles:
-    active:
+    active: dev
   datasource:
-    url: jdbc:h2:../test
-    username: ENC(HGL/iymE+QVof9FATX1I7g==)
-    password:
-  # FIXME: 제거한다.
-  h2:
-    console:
-      enabled: true
+    # TODO: 데이터베이스 접속 정보 작성
+    url: jdbc:postgresql://{ip}:{port}/{db_name}
+    username: {username}
+    password: {password}
   security:
     custom:
-      login-processing-url: /login
+      index-page-url: /index.html
+      login-url-prefix: /api/anon/login
+      login-url-pattern: ${spring.security.custom.login-url-prefix}/**
       login-page-url: /login.html
       username-parameter: id
       password-parameter: pw
-      logout-url: /logout
+      logout-url: /api/anon/logout
       permit-all-urls: >
         /,
         /favicon.ico,
@@ -38,10 +37,8 @@ spring:
         /packetViewer/packetviewer2.sfx.exe,
         /packetViewer/iptable.txt,
         /packetViewer/pcs2.ini
-      deny-all-urls: >
-        /login/**
       session:
-        maximum-per-user: -1
+        maximum-per-user: 1
         timeout: 1800
         exception-if-maximum-exceeded: false
       hide-user-not-found-exceptions: false
