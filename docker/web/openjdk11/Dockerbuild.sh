@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # 변수선언
-_image_name="customer_support_web" 
-_nexus3_repo="10.253.12.86:12000"
+_image_name="server2_spring_was_seed"
+_nexus3_repo="10.253.12.87:12000"
 _version=$1
 
 echo _image_name = "${_image_name}"

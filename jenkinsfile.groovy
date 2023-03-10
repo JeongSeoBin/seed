@@ -1,28 +1,28 @@
 pipeline {
     agent any
     environment {
-        GIT_URL = "https://183.99.50.117/xcalxcap-customer-support/customer-support.git"
+        GIT_URL = "https://183.99.50.117/serverswdev2/server2_spring_was_seed.git"
         GIT_ID = "minkyou.kim"
-        WEB_ROOT_PATH = "$WORKSPACE/inno-customer_support/inno-customer_support-web"
-        WEBAPP_PATH = "$WEB_ROOT_PATH/src/main/webapp"
-        DOCKER_ROOT_PATH = "/home/docker_admin/docker/customer_support"
-        DOCKER_BUILD_PATH = "$DOCKER_ROOT_PATH/web/openjdk8"
+        WEB_ROOT_PATH = "$WORKSPACE/server2_spring_was_seed"
+//        WEBAPP_PATH = "$WEB_ROOT_PATH/src/main/webapp"
+        DOCKER_ROOT_PATH = "/home/docker_admin/docker/server2_spring_was_seed"
+        DOCKER_BUILD_PATH = "$DOCKER_ROOT_PATH/web/openjdk11"
         SSH_CONFIG_NAME = "Docker Container Server"
     }
     tools {
-        nodejs 'node16' 
+//        nodejs 'node16'
     	maven 'maven'
-        jdk 'java8'
+        jdk 'java11'
     }
     stages {
         stage('checkout') {
             steps {
                 checkout([
-                        $class: 'GitSCM', 
-                        branches: [[name: '*/master']], 
-                        doGenerateSubmoduleConfigurations: false, 
+                        $class: 'GitSCM',
+                        branches: [[name: '*/master']],
+                        doGenerateSubmoduleConfigurations: false,
                         userRemoteConfigs: [[
-                                credentialsId: "${GIT_ID}", 
+                                credentialsId: "${GIT_ID}",
                                 url: "${GIT_URL}"
                             ]]
                         ])
@@ -30,24 +30,25 @@ pipeline {
         }
         stage('Build') {
             stages {
-                stage('build - config copy') {
-                    steps {
-                        sh 'cp "${WEBAPP_PATH}/app/configServApp.js" "${WEBAPP_PATH}/app/configServ.js"'
-                    }      
-                }
-            
-                stage('build - npm install') {
-                    steps {
-                        sh 'cd ${WEBAPP_PATH} && npm install --legacy-peer-deps'
-                    }
-                }
-            
-                stage('build - run build') {
-                    steps {
-                        sh 'cd ${WEBAPP_PATH} && npm run build:prod --max-old-space-size=8000'
-                    }
-                }
-                
+
+//                stage('build - config copy') {
+//                    steps {
+//                        sh 'cp "${WEBAPP_PATH}/app/configServApp.js" "${WEBAPP_PATH}/app/configServ.js"'
+//                    }
+//                }
+//
+//                stage('build - npm install') {
+//                    steps {
+//                        sh 'cd ${WEBAPP_PATH} && npm install --legacy-peer-deps'
+//                    }
+//                }
+//
+//                stage('build - run build') {
+//                    steps {
+//                        sh 'cd ${WEBAPP_PATH} && npm run build:prod --max-old-space-size=8000'
+//                    }
+//                }
+
                 stage('build - maven') {
                     steps {
                         sh 'mvn -f $WEB_ROOT_PATH/pom.xml clean install'
@@ -56,10 +57,10 @@ pipeline {
 
                 stage('build - copy') {
                     steps {
-                        sh 'cp -Rf "$WEB_ROOT_PATH/target/inno-customer_support-web-1.0.0.jar" "$DOCKER_BUILD_PATH/inno-customer_support-web.jar"'
+                        sh 'cp -Rf "$WEB_ROOT_PATH/target/seed-1.0.0.jar" "$DOCKER_BUILD_PATH/seed-1.0.0.jar"'
                     }
                 }
-                
+
             }
         }
 
@@ -70,12 +71,12 @@ pipeline {
                         sshPublisher(
                             publishers: [
                                 sshPublisherDesc(
-                                    configName: "${SSH_CONFIG_NAME}", 
+                                    configName: "${SSH_CONFIG_NAME}",
                                     transfers: [
                                         sshTransfer(
-                                            cleanRemote: false, 
-                                            excludes: '', 
-                                            execCommand: "cd ${DOCKER_ROOT_PATH} && docker-compose rm -fsv web", 
+                                            cleanRemote: false,
+                                            excludes: '',
+                                            execCommand: "cd ${DOCKER_ROOT_PATH} && docker-compose rm -fsv web",
                                         )
                                     ]
                                 )
@@ -83,7 +84,7 @@ pipeline {
                         )
                     }
                 }
-                
+
                 stage('docker - image') {
                     steps {
                         sshPublisher(
@@ -102,18 +103,18 @@ pipeline {
                         )
                     }
                 }
-                
+
                 stage('docker - compose up') {
                     steps {
                         sshPublisher(
                             publishers: [
                                 sshPublisherDesc(
-                                    configName: "${SSH_CONFIG_NAME}", 
+                                    configName: "${SSH_CONFIG_NAME}",
                                     transfers: [
                                         sshTransfer(
-                                            cleanRemote: false, 
-                                            excludes: '', 
-                                            execCommand: "cd ${DOCKER_ROOT_PATH} && docker-compose up -d web", 
+                                            cleanRemote: false,
+                                            excludes: '',
+                                            execCommand: "cd ${DOCKER_ROOT_PATH} && docker-compose up -d web",
                                         )
                                     ]
                                 )
