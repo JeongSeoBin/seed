@@ -1,5 +1,8 @@
 package com.innowireless.web.util;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class RegxPatterns {
 
     /**
@@ -22,8 +25,4 @@ public class RegxPatterns {
      * 사용자 ID 체크 정규식. 문자, 숫자, '_', '.' 3~20자리 허용
      */
     public static final String PATTERN_USER_ID = "[\\w\\d\\.]{3,20}";
-
-    private RegxPatterns() {
-        throw new IllegalStateException("Utility class");
-    }
 }

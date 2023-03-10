@@ -1,5 +1,11 @@
 project:
   base-dir: /home/seed
+  test: # TODO: 사용하지 않을 경우 해당 옵션을 제거한다.
+    alive-task1:
+      time: '-'
+    alive-task2:
+      enable: false
+      time: 0/30 * * * * *
 
 spring:
   application:
@@ -7,7 +13,7 @@ spring:
   profiles:
     active: dev
   datasource:
-    # TODO: 데이터베이스 접속 정보 작성
+    # TODO: 데이터베이스 접속 정보를 작성한다.
     url: jdbc:postgresql://{ip}:{port}/{db_name}
     username: {username}
     password: {password}
@@ -48,6 +54,9 @@ server:
     accesslog:
       enabled: true
       directory: ${logging.file.path}/tomcat
+  compression:
+    enabled: true
+    mime-types: text/html, text/xml, text/plain, text/css, text/javascript, application/javascript, application/json
 
 logging:
   file:
@@ -93,7 +102,3 @@ springdoc:
     - group: ANONYMOUS API
       display-name: 익명 사용자 API
       packages-to-scan: com.innowireless.web.api.anon
-
-# FIXME: 제거한다.
-test:
-  task: 0/10 * * * * *

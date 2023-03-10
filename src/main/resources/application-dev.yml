@@ -1,3 +1,12 @@
+project:
+  base-dir: /home/seed
+  test: # TODO: 사용하지 않을 경우 해당 옵션을 제거한다.
+    alive-task1:
+      time: 0/30 * * * * *
+    alive-task2:
+      enable: true
+      time: 0/30 * * * * *
+
 spring:
   datasource:
     url: jdbc:h2:mem:testdb
@@ -31,3 +40,7 @@ spring:
         /packetViewer/iptable.txt,
         /packetViewer/pcs2.ini,
         /h2-console/**
+
+logging:
+  level:
+    com.innowireless.web.task: debug

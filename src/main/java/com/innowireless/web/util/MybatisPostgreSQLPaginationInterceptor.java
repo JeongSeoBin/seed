@@ -34,14 +34,18 @@ public class MybatisPostgreSQLPaginationInterceptor implements Interceptor {
 
     @Override
     public Object intercept(Invocation iv) throws Throwable {
-        log.info("[SEED][{}] intercept", this.getClass().getName());
-
         StatementHandler target = (StatementHandler) iv.getTarget();
         MetaObject metaStatementHandler = MetaObject.forObject(target, DEFAULT_OBJECT_FACTORY,
             DEFAULT_OBJECT_WRAPPER_FACTORY, DEFAULT_REFLECTOR_FACTORY);
         // 여러 인터셉터를 거치면서 wrap 되었을 가능성이 있기 때문에 아래 두 while문에서 원시 object를
         // 추출한다.
         while (metaStatementHandler.hasGetter("h")) {
+            // FIXME: mybatis 버전 업그레이드 이후 발생하는 WARNING
+            //  WARNING: An illegal reflective access operation has occurred
+            //  WARNING: Illegal reflective access by org.apache.ibatis.reflection.invoker.GetFieldInvoker (file:/C:/Users/INNO/.m2/repository/org/mybatis/mybatis/3.5.11/mybatis-3.5.11.jar) to field java.lang.reflect.Proxy.h
+            //  WARNING: Please consider reporting this to the maintainers of org.apache.ibatis.reflection.invoker.GetFieldInvoker
+            //  WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+            //  WARNING: All illegal access operations will be denied in a future release
             Object object = metaStatementHandler.getValue("h");
             metaStatementHandler = MetaObject.forObject(object, DEFAULT_OBJECT_FACTORY,
                 DEFAULT_OBJECT_WRAPPER_FACTORY, DEFAULT_REFLECTOR_FACTORY);

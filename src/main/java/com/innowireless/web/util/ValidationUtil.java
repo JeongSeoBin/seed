@@ -2,6 +2,7 @@ package com.innowireless.web.util;
 
 import com.innowireless.web.api.ApiException;
 import com.innowireless.web.api.ErrorCodes;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.BindingResult;
@@ -17,11 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
+@UtilityClass
 public class ValidationUtil {
-
-    private ValidationUtil() {
-        throw new IllegalStateException("Utility class");
-    }
 
     /**
      * annotation를 이용한 validation 체크 결과에서 error가 존재 할 때 Exception을
@@ -30,11 +28,13 @@ public class ValidationUtil {
      * @param result annotation를 이용한 validation 체크 결과
      */
     public static void checkAnnotationValidationResult(BindingResult result) {
-        if (result == null || !result.hasErrors())
+        if (result == null || !result.hasErrors()) {
             return;
+        }
 
         ArrayList<String> errMsgs = new ArrayList<>();
         List<ObjectError> list = result.getAllErrors();
+
         for (ObjectError e : list) {
             log.error("ObjectError: {}", e);
             errMsgs.add(((FieldError) e).getField()); // error field들을 모은다.
@@ -50,8 +50,9 @@ public class ValidationUtil {
      * @return boolean
      */
     public static boolean isStringNumeric(String str) {
-        if (StringUtils.isEmpty(str))
+        if (StringUtils.isEmpty(str)) {
             return false;
+        }
 
         return str.chars().allMatch(Character::isDigit);
     }
@@ -64,13 +65,15 @@ public class ValidationUtil {
      * @return 모두 같으면 true, 그렇지 않으면 false
      */
     public static boolean isAllStrEquals(String... strs) {
-        if (strs == null || strs.length < 2)
+        if (strs == null || strs.length < 2) {
             return false;
+        }
 
         String first = strs[0];
         for (String str : strs) {
-            if (!StringUtils.equals(first, str))
+            if (!StringUtils.equals(first, str)) {
                 return false;
+            }
         }
 
         return true;
@@ -83,8 +86,9 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isAnyListEmpty(List<?>... objs) {
-        if (objs == null || objs.length == 0)
+        if (objs == null || objs.length == 0) {
             return true;
+        }
 
         boolean isEmpty = false;
         for (List<?> obj : objs) {
@@ -101,12 +105,14 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isListWithNull(List<?> list) {
-        if (list == null || list.isEmpty())
+        if (list == null || list.isEmpty()) {
             return true;
+        }
 
         for (Object obj : list) {
-            if (obj == null)
+            if (obj == null) {
                 return true;
+            }
         }
 
         return false;
@@ -120,8 +126,9 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isStrIncludeIn(String target, String... words) {
-        if (target == null || words.length == 0)
+        if (target == null || words.length == 0) {
             return false;
+        }
 
         return Arrays.asList(words).contains(target);
     }
@@ -134,15 +141,18 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isListContainsAnyStr(List<String> list, String... words) {
-        if (list == null || list.isEmpty() || words == null || words.length == 0)
+        if (list == null || list.isEmpty() || words == null || words.length == 0) {
             return false;
+        }
 
         for (String temp : words) {
-            if (temp == null)
+            if (temp == null) {
                 continue;
+            }
 
-            if (list.contains(temp))
+            if (list.contains(temp)) {
                 return true;
+            }
         }
 
         return false;
@@ -169,40 +179,46 @@ public class ValidationUtil {
      * @return 오직 하나의 non blank String이 포함될 때 true, 그렇지 않으면 false
      */
     public static boolean isContainsOnlyOneNoneBlankStr(String... values) {
-        if (values == null)
+        if (values == null) {
             return false;
+        }
 
         int count = 0;
         for (String value : values) {
-            if (StringUtils.isNotBlank(value))
+            if (StringUtils.isNotBlank(value)) {
                 count++;
-            if (count > 1)
+            }
+
+            if (count > 1) {
                 return false;
+            }
         }
 
         return (count == 1);
     }
 
     public static boolean isTwoDoubleEqual(Double a, Double b) {
-        if (a == null && b == null)
+        if (a == null && b == null) {
             return true;
-        else if (a == null)
+        } else if (a == null) {
             return false;
-        else if (b == null)
+        } else if (b == null) {
             return false;
-        else
+        } else {
             return a.equals(b);
+        }
     }
 
     public static boolean isTwoIntegerEqual(Integer a, Integer b) {
-        if (a == null && b == null)
+        if (a == null && b == null) {
             return true;
-        else if (a == null)
+        } else if (a == null) {
             return false;
-        else if (b == null)
+        } else if (b == null) {
             return false;
-        else
+        } else {
             return a.equals(b);
+        }
     }
 
     public static boolean isNumericType(Object obj) {
@@ -216,8 +232,9 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isDateTimeString(String dateTimeStr) {
-        if (StringUtils.isEmpty(dateTimeStr))
+        if (StringUtils.isEmpty(dateTimeStr)) {
             return false;
+        }
 
         try {
             LocalDateTime.parse(dateTimeStr, CommonUtil.LOCAL_DATE_TIME_FORMATTER);
@@ -236,8 +253,9 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isDateString(String dateStr) {
-        if (StringUtils.isEmpty(dateStr))
+        if (StringUtils.isEmpty(dateStr)) {
             return false;
+        }
 
         try {
             LocalDate.parse(dateStr, CommonUtil.LOCAL_DATE_FORMATTER);
@@ -255,8 +273,9 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isTimeString(String timeStr) {
-        if (StringUtils.isEmpty(timeStr))
+        if (StringUtils.isEmpty(timeStr)) {
             return false;
+        }
 
         try {
             LocalTime.parse(timeStr, CommonUtil.LOCAL_TIME_FORMATTER);
@@ -275,8 +294,9 @@ public class ValidationUtil {
      * @return
      */
     public static boolean isDTimeString(String dTime, DateTimeFormatter dtf) {
-        if (StringUtils.isEmpty(dTime))
+        if (StringUtils.isEmpty(dTime)) {
             return false;
+        }
 
         try {
             LocalTime.parse(dTime, dtf);
@@ -288,24 +308,30 @@ public class ValidationUtil {
     }
 
     public static void checkStartDtimeEndDtime(String sDtime, String eDtime) {
-        if (!isDateTimeString(sDtime))
+        if (!isDateTimeString(sDtime)) {
             throw new ApiException(ErrorCodes.INVALID_ARGUMENT, "sTime");
+        }
 
-        if (!isDateTimeString(eDtime))
+        if (!isDateTimeString(eDtime)) {
             throw new ApiException(ErrorCodes.INVALID_ARGUMENT, "eTime");
+        }
     }
 
     public static boolean isIpCClassAddressEqual(String allowedIp, String userIp) {
         try {
             String[] splitAllowedIp = allowedIp.split("\\.");
             String[] splitUserIpCClass = userIp.split("\\.");
-            if (splitAllowedIp.length != splitUserIpCClass.length)
+
+            if (splitAllowedIp.length != splitUserIpCClass.length) {
                 return false;
+            }
+
             for (int i = 0; i < splitAllowedIp.length - 1; i++) {
                 if (!splitAllowedIp[i].equals(splitUserIpCClass[i])) {
                     return false;
                 }
             }
+
             return true;
         } catch (NullPointerException | ArrayIndexOutOfBoundsException e) {
             return false;

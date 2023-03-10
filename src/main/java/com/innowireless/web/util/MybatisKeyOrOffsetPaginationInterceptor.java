@@ -34,8 +34,6 @@ public class MybatisKeyOrOffsetPaginationInterceptor implements Interceptor {
 
     @Override
     public Object intercept(Invocation iv) throws Throwable {
-        log.info("[SEED][{}] intercept", this.getClass().getName());
-
         StatementHandler target = (StatementHandler) iv.getTarget();
         MetaObject metaStatementHandler = MetaObject.forObject(target, DEFAULT_OBJECT_FACTORY,
             DEFAULT_OBJECT_WRAPPER_FACTORY, DEFAULT_REFLECTOR_FACTORY);

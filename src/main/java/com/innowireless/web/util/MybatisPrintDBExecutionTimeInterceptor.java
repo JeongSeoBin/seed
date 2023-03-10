@@ -36,8 +36,6 @@ public class MybatisPrintDBExecutionTimeInterceptor implements Interceptor {
 
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
-        log.info("[SEED][{}] intercept", this.getClass().getName());
-
         MappedStatement mappedStatement = (MappedStatement) invocation.getArgs()[0];
         Object parameter = null;
         if (invocation.getArgs().length > 1) {
