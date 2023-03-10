@@ -14,7 +14,7 @@
     <version>1.0.0</version>
 
     <name>seed</name>
-    <description>Seed project for Spring Boot</description>
+    <description>Seed Web Application Server</description>
 
     <properties>
         <java.version>11</java.version>
