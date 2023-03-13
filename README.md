@@ -6,6 +6,7 @@
    $ git clone https://183.99.50.117/serverswdev2/server2_spring_was_seed.git
    ```
 1. server2_spring_was_seed 폴더를 신규 프로젝트의 repository 이름과 동일하게 변경한다.
+   > 💡 신규 프로젝트는 `프로젝트명-was`로 이름 짓는다. ~~`프로젝트명`은 underscore로 작성한다.~~
    ```console
    $ mv server2_spring_was_seed atas-web
    ```
