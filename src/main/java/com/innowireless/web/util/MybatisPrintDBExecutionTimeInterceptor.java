@@ -51,7 +51,7 @@ public class MybatisPrintDBExecutionTimeInterceptor implements Interceptor {
         returnValue = invocation.proceed();
 
         long end = System.currentTimeMillis();
-        long time = (end - start);
+        long time = end - start;
 
         if (time > 1) {
             printExecutionTime(configuration, boundSql, sqlId, time);

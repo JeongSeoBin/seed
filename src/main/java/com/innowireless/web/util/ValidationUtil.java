@@ -92,7 +92,7 @@ public class ValidationUtil {
 
         boolean isEmpty = false;
         for (List<?> obj : objs) {
-            isEmpty |= (obj == null || obj.isEmpty());
+            isEmpty |= obj == null || obj.isEmpty();
         }
 
         return isEmpty;
@@ -194,7 +194,7 @@ public class ValidationUtil {
             }
         }
 
-        return (count == 1);
+        return count == 1;
     }
 
     public static boolean isTwoDoubleEqual(Double a, Double b) {
@@ -222,7 +222,7 @@ public class ValidationUtil {
     }
 
     public static boolean isNumericType(Object obj) {
-        return ((obj instanceof Integer) || (obj instanceof Long) || (obj instanceof Double));
+        return obj instanceof Integer || obj instanceof Long || obj instanceof Double;
     }
 
     /**

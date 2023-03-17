@@ -66,7 +66,7 @@ public class CommonUtil {
 
         sb.append(e.getMessage());
         int cnt = 0;
-        while (null != (cause = result.getCause()) && (result != cause)) {
+        while (null != (cause = result.getCause()) && result != cause) {
             sb.append(" (").append(cause.getMessage());
             result = cause;
             cnt++;

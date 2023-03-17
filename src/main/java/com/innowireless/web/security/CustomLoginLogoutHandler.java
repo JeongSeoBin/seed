@@ -116,7 +116,7 @@ public class CustomLoginLogoutHandler {
             // 자세한 사항은 UserAuthenticationService 클래스의 메인 주석 참고
             AuthenticationException newException = exception;
 
-            if ((exception instanceof InternalAuthenticationServiceException) && (exception.getCause() != null)) {
+            if (exception instanceof InternalAuthenticationServiceException && exception.getCause() != null) {
                 newException = (AuthenticationException) exception.getCause();
             }
 

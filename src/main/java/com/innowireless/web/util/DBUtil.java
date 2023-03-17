@@ -33,7 +33,7 @@ public class DBUtil {
      * 검색 결과의 pagination을 위한 RowBounds를 생성한다.
      */
     public static RowBounds createRowBounds(Integer offset, Integer count) {
-        if ((offset == null) && (count == null)) {
+        if (offset == null && count == null) {
             return RowBounds.DEFAULT;
         }
 
@@ -135,7 +135,7 @@ public class DBUtil {
     }
 
     public static boolean toNotNullBoolean(Object obj) {
-        return (obj == null) ? false : (boolean) obj;
+        return obj != null && (boolean) obj;
     }
 
     public static LocalDateTime toLocalDateTime(Object obj) {

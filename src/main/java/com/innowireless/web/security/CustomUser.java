@@ -39,7 +39,7 @@ public class CustomUser implements UserDetails, CredentialsContainer {
         // 추가된 필드
         final String userName
     ) {
-        if (((userId == null) || "".equals(userId)) || (password == null)) {
+        if (userId == null || "".equals(userId) || password == null) {
             throw new IllegalArgumentException("Cannot pass null or empty values to constructor");
         }
 
