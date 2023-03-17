@@ -10,10 +10,10 @@
     </parent>
 
     <groupId>com.innowireless</groupId>
-    <artifactId>seed</artifactId>
+    <artifactId>SeedWas</artifactId>
     <version>1.0.0</version>
 
-    <name>seed</name>
+    <name>SeedWas</name>
     <description>Seed Web Application Server</description>
 
     <properties>

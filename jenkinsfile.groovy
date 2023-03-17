@@ -3,9 +3,9 @@ pipeline {
     environment {
         GIT_URL = "https://183.99.50.117/serverswdev2/server2_spring_was_seed.git"
         GIT_ID = "minkyou.kim"
-        WEB_ROOT_PATH = "$WORKSPACE/server2_spring_was_seed"
+        WEB_ROOT_PATH = "$WORKSPACE/spring_was_seed"
 //        WEBAPP_PATH = "$WEB_ROOT_PATH/src/main/webapp"
-        DOCKER_ROOT_PATH = "/home/docker_admin/docker/server2_spring_was_seed"
+        DOCKER_ROOT_PATH = "/home/docker_admin/docker/spring_was_seed"
         DOCKER_BUILD_PATH = "$DOCKER_ROOT_PATH/web/openjdk11"
         SSH_CONFIG_NAME = "Docker Container Server"
     }

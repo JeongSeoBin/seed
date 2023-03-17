@@ -9,7 +9,8 @@ project:
 
 spring:
   application:
-    name: Seed
+    name: @project.name@
+    version: @project.version@
   profiles:
     active: dev
   datasource:
