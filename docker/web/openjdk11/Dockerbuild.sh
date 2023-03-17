@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # 변수선언
-_image_name="server2_spring_was_seed"
+_image_name="spring_was_seed"
 _nexus3_repo="10.253.12.87:12000"
 _version=$1
 

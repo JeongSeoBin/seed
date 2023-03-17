@@ -1,9 +1,9 @@
 version: '2'
-networks:
-  server2_spring_was_seed_net:
-    ipam:
-      config:
-        - subnet: 172.21.0.0/16
+#networks:
+#  server2_spring_was_seed_net:
+#    ipam:
+#      config:
+#        - subnet: 172.21.0.0/16
 services:
 #  db:
 #    image: 10.253.12.87:12000/server2_spring_was_seed_db:latest #image명
@@ -17,8 +17,8 @@ services:
 #        ipv4_address: 172.21.0.10
 #    restart: always
   web:
-    image: 10.253.12.87:12000/server2_spring_was_seed:latest #image명
-    container_name: server2_spring_was_seed #image Container명
+    image: 10.253.12.87:12000/spring_was_seed:latest #image명
+    container_name: spring_was_seed #image Container명
     mem_limit: 2048m
     environment:
       JAVA_OPTS: '-XshowSettings:vm
@@ -28,11 +28,11 @@ services:
       - '11801:8080' #외부 11301 : 내부 8080
     volumes:
 #      - /home/docker_admin/docker_volumes/server2_spring_was_seed/web:/home/docker_admin/docker_volumes/server2_spring_was_seed/web #외부볼륨 local path : Container path
-      - /etc/timezone:/etc/timezone:ro # 시간 동기화
+#      - /etc/timezone:/etc/timezone:ro # 시간 동기화
       - /etc/localtime:/etc/localtime:ro
-    networks:
-      server2_spring_was_seed_net:
-        ipv4_address: 172.21.0.11
+#    networks:
+#      server2_spring_was_seed_net:
+#        ipv4_address: 172.21.0.11
     restart: always
-    depends_on:
-      - db
+#    depends_on:
+#      - db

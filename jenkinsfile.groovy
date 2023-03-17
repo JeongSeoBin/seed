@@ -57,7 +57,7 @@ pipeline {
 
                 stage('build - copy') {
                     steps {
-                        sh 'cp -Rf "$WEB_ROOT_PATH/target/seed-1.0.0.jar" "$DOCKER_BUILD_PATH/seed-1.0.0.jar"'
+                        sh 'cp -Rf "$WEB_ROOT_PATH/target/\"${artifactId}\"-\"${version}\".jar" "$DOCKER_BUILD_PATH/\"${artifactId}\"-\"${version}\".jar"'
                     }
                 }
 
