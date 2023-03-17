@@ -21,23 +21,25 @@ import java.util.Map;
  * 한다. 이 class object를 사용하는 경우는 key paging과의 호환을 위해 order by 구문을 이 class 내부에서
  * 생성한다.
  */
-public class KeyOrOffsetPagingItem
-{
+public class KeyOrOffsetPagingItem {
+
+    public static final String OP_CUR = "cur";
+    public static final String OP_NEXT = "next";
+    public static final String OP_PREV = "prev";
+
     @Schema(title = "fetch할 줄 수")
     @NotNull
     public Integer count;
 
-    public static class KeyColumn
-    {
-        public KeyColumn() {}
+    public static class KeyColumn {
+        public KeyColumn() {
+        }
 
-        public KeyColumn(String name)
-        {
+        public KeyColumn(String name) {
             this.name = name;
         }
 
-        public KeyColumn(String name, boolean isDesc)
-        {
+        public KeyColumn(String name, boolean isDesc) {
             this.name = name;
             this.isDesc = isDesc;
         }
@@ -49,7 +51,7 @@ public class KeyOrOffsetPagingItem
     @Schema(
         title =
             "페이지 기준 컬럼 정보 목록. order by 순서대로 나열해야 함. " +
-            "order by 문을 구성할 때와 key paging 시 where 절 구성에 사용된다.")
+                "order by 문을 구성할 때와 key paging 시 where 절 구성에 사용된다.")
     @NotEmpty
     public List<KeyColumn> keyColumns;
 
@@ -65,15 +67,14 @@ public class KeyOrOffsetPagingItem
     @Schema(
         title =
             "key 페이징을 할 때 지정할 수 있다. " +
-            "페이지의 기준이 될 키 값. keyColumns 순서에 대응되는 값이어야 한다. " +
-            "op가 'cur'일 때는 null이어도 된다. 이때는 첫 페이지로 간주한다.")
+                "페이지의 기준이 될 키 값. keyColumns 순서에 대응되는 값이어야 한다. " +
+                "op가 'cur'일 때는 null이어도 된다. 이때는 첫 페이지로 간주한다.")
     public List<Object> keyValues;
 
     /**
      * member variable들을 자유롭게 지정할 때 사용한다.
      */
-    public KeyOrOffsetPagingItem()
-    {
+    public KeyOrOffsetPagingItem() {
     }
 
     /**
@@ -81,8 +82,7 @@ public class KeyOrOffsetPagingItem
      * member variable들의 규약에 따라, offset이 null이 아닌 경우는 op와 keyValue가 사용되지 않는다.
      */
     public KeyOrOffsetPagingItem(int count, String keyColumnName, Integer offset, String op,
-                                 Object keyValue)
-    {
+                                 Object keyValue) {
         this.count = count;
         keyColumns = Collections.singletonList(
             new KeyOrOffsetPagingItem.KeyColumn(keyColumnName));
@@ -93,27 +93,22 @@ public class KeyOrOffsetPagingItem
         validate();
     }
 
-    public void validate()
-    {
+    public void validate() {
         if (count == null)
             throw new ApiException(ErrorCodes.INVALID_ARGUMENT, "count is null");
-        if ((keyColumns == null) || (keyColumns.isEmpty()))
+        if (keyColumns == null || keyColumns.isEmpty())
             throw new ApiException(ErrorCodes.INVALID_ARGUMENT, "null or empty keyColumns");
         for (KeyColumn keyColumn : keyColumns)
-            if (! keyColumn.name.matches(RegxPatterns.PATTERN_COLUMN_NAME))
+            if (!keyColumn.name.matches(RegxPatterns.PATTERN_COLUMN_NAME))
                 throw new ApiException(ErrorCodes.INVALID_ARGUMENT, "invalid keyColumn.name");
-        if (offset == null)
-        {
-            if (! ValidationUtil.isStrIncludeIn(op, OP_CUR, OP_NEXT, OP_PREV))
+        if (offset == null) {
+            if (!ValidationUtil.isStrIncludeIn(op, OP_CUR, OP_NEXT, OP_PREV))
                 throw new ApiException(ErrorCodes.INVALID_ARGUMENT, "op");
-            if (keyValues == null)
-            {
-                if (! StringUtils.equals(op, OP_CUR))
+            if (keyValues == null) {
+                if (!StringUtils.equals(op, OP_CUR))
                     throw new ApiException(ErrorCodes.INVALID_ARGUMENT,
                         "keyValues must not be null");
-            }
-            else
-            {
+            } else {
                 for (Object value : keyValues)
                     if (value == null)
                         throw new ApiException(ErrorCodes.INVALID_ARGUMENT,
@@ -128,39 +123,34 @@ public class KeyOrOffsetPagingItem
      * key paging 기법에서 prev 할때는 order by를 반대로 하기 때문.
      * TODO 이것도 interceptor에서 하자.
      */
-    public void postprocessRows(List<Map<String, Object>> rows)
-    {
-        if ((offset == null) && StringUtils.equals(op, OP_PREV))
+    public void postprocessRows(List<Map<String, Object>> rows) {
+        if (offset == null && StringUtils.equals(op, OP_PREV))
             Collections.reverse(rows);
     }
 
     // TODO 현재는 PostgreSQL 전용. DB 종류와 상관 없게 만들자.
-    public String buildPaginationSql(String sql)
-    {
-        if (offset != null)
-        {
+    public String buildPaginationSql(String sql) {
+        if (offset != null) {
             String sqlWithOrderBy = sql + buildOrderByClause();
             return MybatisPostgreSQLPaginationInterceptor.buildPaginationSql(sqlWithOrderBy,
                 offset, count);
-        }
-        else
+        } else
             return buildKeyPaginationSql(sql);
     }
 
     /**
      * sql을 key paging sql로 바꾼다.
      * 아래와 같이 만든다.
-     *
+     * <p>
      * select * from
      * (
-     *     [mapper.xml 에서 작성한 sql]
+     * [mapper.xml 에서 작성한 sql]
      * )
      * where [key paging 방식에 맞는 적절한 값]
      * order by [keyColumns]
      * [fetch limit 구문]
      */
-    private String buildKeyPaginationSql(String sql)
-    {
+    private String buildKeyPaginationSql(String sql) {
         return "select * from (" + sql.trim() + ") t" +
             buildWhereClause() +
             buildOrderByClause() +
@@ -168,28 +158,32 @@ public class KeyOrOffsetPagingItem
     }
 
     // TODO value를 parameter로 넘겨주게 구현해 보자.
-    private String buildWhereClause()
-    {
+    private String buildWhereClause() {
         if (keyValues == null)
             return "";
 
         String ascOp, descOp;
-        switch (op)
-        {
-        case OP_CUR:  ascOp = " >= "; descOp = " <= "; break;
-        case OP_NEXT: ascOp = " > ";  descOp = " < ";  break;
-        default:      ascOp = " < ";  descOp = " > ";  break;  // OP_PREV
+        switch (op) {
+            case OP_CUR:
+                ascOp = " >= ";
+                descOp = " <= ";
+                break;
+            case OP_NEXT:
+                ascOp = " > ";
+                descOp = " < ";
+                break;
+            default:
+                ascOp = " < ";
+                descOp = " > ";
+                break;  // OP_PREV
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append(" where ");
-        for (int i = 0; i < keyColumns.size(); i++)
-        {
-            if (i > 0)
-            {
+        for (int i = 0; i < keyColumns.size(); i++) {
+            if (i > 0) {
                 sb.append(" or ");
-                for (int j = 0; j < i; j++)
-                {
+                for (int j = 0; j < i; j++) {
                     sb.append(keyColumns.get(j).name)
                         .append("=")
                         .append(getKeyValueStr(keyValues.get(j)))
@@ -198,14 +192,13 @@ public class KeyOrOffsetPagingItem
             }
             KeyColumn keyColumn = keyColumns.get(i);
             sb.append(keyColumn.name)
-                .append(((keyColumn.isDesc != null) && keyColumn.isDesc) ? descOp : ascOp)
+                .append(keyColumn.isDesc != null && keyColumn.isDesc ? descOp : ascOp)
                 .append(getKeyValueStr(keyValues.get(i)));
         }
         return sb.toString();
     }
 
-    private String getKeyValueStr(Object obj)
-    {
+    private String getKeyValueStr(Object obj) {
         String objStr = obj.toString();
         if (obj instanceof String)
             return "'" + objStr.replaceAll("'", "''") + "'";
@@ -213,26 +206,20 @@ public class KeyOrOffsetPagingItem
             return objStr;
     }
 
-    private String buildOrderByClause()
-    {
+    private String buildOrderByClause() {
         StringBuilder sb = new StringBuilder();
         sb.append(" order by ");
-        boolean isReverse = (offset == null) && (StringUtils.equals(op, OP_PREV));
+        boolean isReverse = offset == null && StringUtils.equals(op, OP_PREV);
         boolean isFirst = true;
-        for (KeyColumn keyColumn : keyColumns)
-        {
-            if (! isFirst)
+        for (KeyColumn keyColumn : keyColumns) {
+            if (!isFirst)
                 sb.append(",");
             else
                 isFirst = false;
             sb.append(keyColumn.name);
-            if (((keyColumn.isDesc != null) && (keyColumn.isDesc)) ^ isReverse)
+            if ((keyColumn.isDesc != null && keyColumn.isDesc) ^ isReverse)
                 sb.append(" desc");
         }
         return sb.toString();
     }
-
-    public static final String OP_CUR = "cur";
-    public static final String OP_NEXT = "next";
-    public static final String OP_PREV = "prev";
 }

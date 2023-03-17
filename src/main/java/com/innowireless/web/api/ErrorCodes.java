@@ -1,5 +1,8 @@
 package com.innowireless.web.api;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class ErrorCodes {
 
     // @formatter:off
@@ -68,8 +71,4 @@ public class ErrorCodes {
     //
     //=============================================================================================
     // @formatter:on
-
-    private ErrorCodes() {
-        throw new IllegalStateException("Utility class");
-    }
 }
