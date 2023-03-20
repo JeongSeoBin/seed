@@ -125,4 +125,20 @@ pipeline {
             }
         }
    }
+   post {
+		always {
+			recordIssues(
+				enabledForFailure: false,
+				failOnError: false,
+                aggregatingResults: true,
+                tools: [
+                    java(),
+                    spotBugs(pattern: '**/target/spotbugsXml.xml'),
+                    pmdParser(pattern: '**/target/pmd.xml'),
+                    cpd(pattern: '**/target/cpd.xml'),
+                    checkStyle(pattern: '**/target/checkstyle-result.xml'),
+                ],
+			)
+		}
+   }
 }
