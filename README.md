@@ -74,7 +74,7 @@ spring:
    </dependency>
    ```
 
-1. `build` 요소에서 `os-maven-plugin`와 `protobuf-maven-plugin`에 대한 주석을 제거한다.
+1. `build` 요소에서 `os-maven-plugin`과 `protobuf-maven-plugin`에 대한 주석을 제거한다.
    ```xml
    <build>
       <extensions>
@@ -108,4 +108,4 @@ spring:
          </plugin>
          ...
    ```
-1. proto 파일(`resources/grpc/*.proto`) 변경 후 `mvn compile`을 실행 한다.
+1. proto 파일(`resources/grpc/*.proto`) 변경 후 `mvn compile`을 실행한다.
