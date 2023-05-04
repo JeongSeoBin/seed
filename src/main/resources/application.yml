@@ -103,3 +103,10 @@ springdoc:
     - group: ANONYMOUS API
       display-name: 익명 사용자 API
       packages-to-scan: com.innowireless.web.api.anon
+
+xdb:
+  enable: true
+  config:
+    host: 10.253.12.103
+    port: 31340
+  underscore-to-camelcase: true
