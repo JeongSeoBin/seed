@@ -12,7 +12,7 @@ pipeline {
     tools {
 //        nodejs 'node16'
     	maven 'maven'
-        jdk 'java11'
+        jdk 'java17'
     }
     stages {
         stage('checkout') {
