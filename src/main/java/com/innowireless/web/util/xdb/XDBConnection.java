@@ -2,14 +2,20 @@ package com.innowireless.web.util.xdb;
 
 import com.innowireless.web.api.ApiException;
 import com.innowireless.web.api.ErrorCodes;
+import com.innowireless.web.util.AuthenticationUtil;
+import com.innowireless.web.util.MybatisMapperUtil;
 import com.innowireless.xdb5gcp.rui.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.text.CaseUtils;
 import org.springframework.lang.Nullable;
 
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -27,16 +33,22 @@ public class XDBConnection {
     private XdbServiceGrpc.XdbServiceBlockingStub blockingStub;
     private XdbServiceGrpc.XdbServiceStub stub;
 
+    private MybatisMapperUtil mapperUtil;
+
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class XdbConnectionInfo {
         Integer id;
         String host;
         Integer port;
     }
 
-    public XDBConnection(XdbConnectionInfo connectInfo) {
+    public XDBConnection(final XdbConnectionInfo connectInfo, final MybatisMapperUtil mapperUtil) {
         this.xdbId = connectInfo.id;
         this.xdbHost = connectInfo.host;
         this.xdbPort = connectInfo.port;
+
+        this.mapperUtil = mapperUtil;
 
         initConnection();
     }
@@ -111,22 +123,11 @@ public class XDBConnection {
         return result;
     }
 
-    public interface ExecuteQueryCallback {
-        /**
-         * rpc의 onError, onCompleted를 통합한 것.
-         * executeQueryKey()를 call한 thread와는 다른 thread에서 call 된다.
-         * 극단적인 경우는 executeQueryKey()가 return하기 전에 call 될 수도 있다.
-         *
-         * @param result    - 마지막 result. onCompleted로 끝났을 때 null이 아니다.
-         * @param throwable - onError로 끝났을 때 null이 아니다.
-         */
-        void onCompleted(@Nullable ExecutionResult result, @Nullable Throwable throwable);
-    }
-
     // server로부터 첫 응답이 왔을 때 해당 응답을 return 한다.
     // caller가 실제 끝났는지의 여부를 알려면 cb나 getExecutionResult를 사용해야 한다.
     public ExecutionResult executeQueryKey(String key, @Nullable ExecuteQueryCallback cb)
         throws Throwable {
+
         final CountDownLatch finishInitialWaitLatch = new CountDownLatch(1);
         final ExecuteInfoReceiver infoReceiver = new ExecuteInfoReceiver();
         Key request = Key.newBuilder()
@@ -295,5 +296,145 @@ public class XDBConnection {
         public int endLine;
         public int startPos;
         public int endPos;
+    }
+
+    public List<Map<String, String>> select(final String queryId, final Object sqlParam,
+                                            final Long startTime, final Long endTime,
+                                            final Long offset, final Long limit) throws Throwable {
+
+        final String query = mapperUtil.getQuery(queryId, sqlParam);
+        final GenerateResult generateResult =
+            this.generateQueryKey(AuthenticationUtil.getCurrentUserId(), query, startTime, endTime);
+        final String generatedKey = generateResult.getKey().getKeyString();
+
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        final XDBExecuteQueryCallback callback = new XDBExecuteQueryCallback(countDownLatch);
+        this.executeQueryKey(generatedKey, callback);
+        countDownLatch.await();
+
+        final ExecutionResult executionResult = callback.result;
+
+        log.info("Execution time: {}", executionResult.getExecutionTime());
+
+        if (callback.throwable != null) { // 에러가 없으면 null 리턴하는 것으로 보임
+            throw callback.throwable;
+        } else {
+            final Iterator<Dataset> iterator;
+            final List<List<String>> records = new ArrayList<>();
+
+            if (offset == null && limit == null) {
+                iterator = this.getDataset(generatedKey, 0, executionResult.getResultRowCount());
+            } else {
+                iterator = this.getDataset(generatedKey, offset, limit);
+            }
+
+            iterator.forEachRemaining(dataset -> {
+                records.add(dataset.getRecordList());
+            });
+
+            final TableSchemaResult tableSchemaResult = this.getTableSchema(generatedKey);
+            final List<String> columnNames = tableSchemaResult.getColumnInfoListList().stream()
+                .map(column -> {
+                    final String columnName = column.getColumnName();
+
+                    // TODO: 우선 camelCase만 지원하기로 한다.
+                    /*
+                    return properties.isUnderscoreToCamelcase() ?
+                        CaseUtils.toCamelCase(columnName, false, '_') : columnName;
+                    */
+                    return CaseUtils.toCamelCase(columnName, false, '_');
+                }).toList();
+
+            final List<Map<String, String>> result = new ArrayList<>();
+            records.forEach(record -> {
+                final Map<String, String> r = new HashMap<>();
+
+                for (int i = 0; i < columnNames.size(); i++) {
+                    r.put(columnNames.get(i), record.get(i));
+                }
+
+                result.add(r);
+            });
+
+            return result;
+        }
+    }
+
+    private String execute(final String queryId, final Object sqlParam,
+                           final Long startTime, final Long endTime) throws Throwable {
+
+        log.debug("Start execute.");
+
+        final String query = mapperUtil.getQuery(queryId, sqlParam);
+        final GenerateResult generateResult =
+            this.generateQueryKey(AuthenticationUtil.getCurrentUserId(), query, startTime, endTime);
+        final String generatedKey = generateResult.getKey().getKeyString();
+        final XdbSqlEditorGenExecutingQueryKeyCallback cb =
+            new XdbSqlEditorGenExecutingQueryKeyCallback(generateResult.getSqlType());
+
+        this.executeQueryKey(generatedKey, cb);
+
+        log.debug("End execute. (key:{})", generatedKey);
+
+        return generatedKey;
+    }
+
+    public interface ExecuteQueryCallback {
+        /**
+         * rpc의 onError, onCompleted를 통합한 것.
+         * executeQueryKey()를 call한 thread와는 다른 thread에서 call 된다.
+         * 극단적인 경우는 executeQueryKey()가 return하기 전에 call 될 수도 있다.
+         *
+         * @param result    - 마지막 result. onCompleted로 끝났을 때 null이 아니다.
+         * @param throwable - onError로 끝났을 때 null이 아니다.
+         */
+        void onCompleted(@Nullable ExecutionResult result, @Nullable Throwable throwable);
+    }
+
+    @RequiredArgsConstructor
+    private static class XDBExecuteQueryCallback implements ExecuteQueryCallback {
+        public volatile ExecutionResult result;
+        public volatile Throwable throwable;
+
+        private final CountDownLatch countDownLatch;
+
+        @Override
+        public void onCompleted(ExecutionResult result, Throwable throwable) {
+            this.result = result;
+            this.throwable = throwable;
+            this.countDownLatch.countDown();
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static class XdbSqlEditorGenExecutingQueryKeyCallback implements ExecuteQueryCallback {
+        private final SqlType sqlType;
+
+        @Override
+        public void onCompleted(ExecutionResult result, Throwable throwable) {
+            if (sqlType != SqlType.SELECT_STMT) {
+                final ExecutionResult.ExecutionStatus executionStatus = result.getExecutionStatus();
+                String message = "";
+
+                if (throwable != null) {
+                    message = throwable.getMessage();
+                } else if (executionStatus == ExecutionResult.ExecutionStatus.STATUS_ERROR) {
+                    message = result.getExecutionErrorCodeValue() + ": " + result.getExecutionMessage();
+                } else if (executionStatus == ExecutionResult.ExecutionStatus.STATUS_DONE) {
+                    final String seconds;
+                    final long timestamp = result.getExecutionTime(); // milli seconds
+
+                    if (timestamp != 0L) {
+                        seconds = String.valueOf((double) timestamp / 1000);
+                    } else {
+                        seconds = "0";
+                    }
+
+                    message = "완료 (시간: " + seconds + "초)";
+                }
+
+                log.info("{} / {}", executionStatus, message);
+            }
+        }
     }
 }
