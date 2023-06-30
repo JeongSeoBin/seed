@@ -2,69 +2,40 @@ package com.innowireless.web.util.xdb;
 
 import com.innowireless.web.api.ApiException;
 import com.innowireless.web.api.ErrorCodes;
-import lombok.RequiredArgsConstructor;
+import com.innowireless.web.util.MybatisMapperUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * XDB Connection 관리
  */
-@Service
-@ConditionalOnBean(XDBProperties.class)
 @Slf4j
-@RequiredArgsConstructor
 public class XDBConnectionManagementService {
 
-    private final XDBProperties properties;
+    private final MybatisMapperUtil mapperUtil;
 
     private List<XDBConnection> connections = new ArrayList<>();
     private HashMap<Integer, XDBConnection> connectionsMap = new HashMap<>();
 
-    @PostConstruct
-    public void postConstruct() {
+    public XDBConnectionManagementService(final List<XDBConnection.XdbConnectionInfo> list,
+                                          final MybatisMapperUtil mapperUtil) {
+        this.mapperUtil = mapperUtil;
+
         log.info("Initializing XDB Connection Service");
 
-        /*
-        List<Map<String, Object>> rows = xdbMapper.getEnabledXdbs();
-
-        for (Map<String, Object> row : rows) {
-            add(((BigDecimal) row.get("XDB_ID")).intValue(),
-                (String) row.get("HOST"),
-                ((BigDecimal) row.get("PORT")).intValue());
+        for (final XDBConnection.XdbConnectionInfo info : list) {
+            add(info.id, info.host, info.port);
             log.info("add XdbConnection: id = {}, host = {}, port = {}",
-                ((BigDecimal) row.get("XDB_ID")).intValue(),
-                row.get("HOST"),
-                ((BigDecimal) row.get("PORT")).intValue());
-        }
-        */
-
-        final List<XDBProperties.Config> list;
-
-        if (Objects.nonNull(properties.getConfig())) {
-            list = new ArrayList<>();
-            list.add(properties.getConfig());
-        } else {
-            list = properties.getConfigs();
-        }
-
-        for (final XDBProperties.Config config : list) {
-            add(config.getId(), config.getHost(), config.getPort());
-            log.info("add XdbConnection: {}", config);
+                info.id, info.host, info.port);
         }
 
         log.info("Initialized XDB Connection Service");
     }
 
-    @PreDestroy
-    public void preDestroy() {
+    public void destroy() {
         log.info("Destroying XDB Connection Service");
     }
 
@@ -81,7 +52,7 @@ public class XDBConnectionManagementService {
             remove(id);
         }
 
-        XDBConnection newConnection = new XDBConnection(connectionInfo);
+        XDBConnection newConnection = new XDBConnection(connectionInfo, this.mapperUtil);
         connections.add(newConnection);
         connectionsMap.put(id, newConnection);
     }
